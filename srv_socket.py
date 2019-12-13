@@ -1,6 +1,6 @@
-import config
-HOST = config.HOST
-SOCKET_PORT = config.SOCKET_PORT
+#Load config variable
+from config import HOST
+from config import SOCKET_PORT
 
 from websocket_server import WebsocketServer
 

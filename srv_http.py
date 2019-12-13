@@ -1,6 +1,6 @@
-import config
-HOST = config.HOST
-HTTP_PORT = config.HTTP_PORT
+#Load config variable
+from config import HOST
+from config import HTTP_PORT
 
 import http.server
 import socketserver
