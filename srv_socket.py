@@ -3,10 +3,17 @@ from config import HOST
 from config import SOCKET_PORT
 
 from websocket_server import WebsocketServer
+import base64
 
 class Device():
     def __init__(self, id):
         self.id_ = id
+    inbox_ = ""
+    ip_ = ""
+    name_ = ""
+    mac_ = ""
+    apps_ = ""
+    flag_sent_ = False
 
 
 global g_devices
@@ -32,6 +39,7 @@ def ClientLeft(client, server):
     RemoveDeviceById(client['id'])
 # Called when a client sends a message
 def MessageReceived(client, server, message):
+    message = base64.b64decode(message).decode('UTF-8','strict')
     print("Client(%d) said: %s" % (client['id'], message))
     server.send_message_to_all("Client(%d) said: %s" % (client['id'], message))
     
