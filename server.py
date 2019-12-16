@@ -26,13 +26,14 @@ t2.start()
 from srv_socket import g_devices
 while True:
     cmd = input()
-    
+
     if(cmd == 'exit'):
         print("Good Bye!")
         os._exit(0)
 
     if(cmd == 'list'):
         print(g_devices)
-        continue   
+        continue
+
     print("Doesn't exist command: " + cmd)
     

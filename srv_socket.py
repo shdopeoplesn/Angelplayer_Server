@@ -38,7 +38,20 @@ def ClientLeft(client, server):
 # Called when a client sends a message
 def MessageReceived(client, server, message):
     message = base64.b64decode(message).decode('UTF-8','strict')
-    print("Client(%d) said: %s" % (client['id'], message))
+    id = client['id']
+
+    if(message == "ACK"):
+        print("Client(%d) sent a ACK signal." % (client['id']))
+        print("Recived Data: " + g_devices[id].inbox_)
+        g_devices[id].flag_sent_ = False
+    if(message == "SYN"):
+        print("Client(%d) sent a SYN signal." % (client['id']))
+        g_devices[id].inbox_ = ""
+        g_devices[id].flag_sent_ = True
+    else:
+        if(g_devices[id].flag_sent_):
+            g_devices[id].inbox_ += message
+
 
     #server.send_message_to_all("Client(%d) said: %s" % (client['id'], message))
     
