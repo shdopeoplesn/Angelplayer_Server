@@ -24,6 +24,7 @@ t2.start()
 
 
 from srv_socket import g_devices
+
 while True:
     cmd = input()
 
