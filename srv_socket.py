@@ -4,6 +4,7 @@ from config import SOCKET_PORT
 
 from websocket_server import WebsocketServer
 import base64
+import json
 
 class Device():
     def __init__(self, id):
@@ -16,7 +17,7 @@ class Device():
         self.os_ = ""
         self.user = ""
         self.apps_ = ""
-        self.string = ""
+        self.string_ = ""
         self.flag_sent_ = False
 
 
@@ -43,30 +44,43 @@ def ClientLeft(client, server):
 
 # Called when a client sends a message
 def MessageReceived(client, server, message):
-    print("Received Raw Data: " + message)
+    #print("Received Raw Data: " + message)
+
     #decode received message from base64 and turn into UTF-8
     message = base64.b64decode(message).decode('UTF-8','strict')
+
+    #print("Received decoded Data: " + message)
     #get client's id(Socket Session)
     id = client['id']
     if(message == "GET"):
         print("Client(%d) sent a GET signal." % (client['id']))
+
+        g_devices[id].cid_ = "ControlPanel"
+        server.send_message(client,"SYN")
         for index in g_devices:
-            server.send_message(client,g_devices[index].cid_)
+            if g_devices[index].cid_ is "ControlPanel" or g_devices[index].cid_ is "":
+                continue
+            server.send_message(client,g_devices[index].string_)
+        server.send_message(client,"ACK")
     #When end of communication
     if(message == "ACK"):
         print("Client(%d) sent a ACK signal." % (client['id']))
-        #print("Recived Data: " + g_devices[id].inbox_)
+        print("Recived Data: " + g_devices[id].inbox_)
         g_devices[id].flag_sent_ = False
         g_devices[id].string_ = g_devices[id].inbox_
-        data = g_devices[id].inbox_.split(':')
-        g_devices[id].cid_ = data[0]
-        g_devices[id].ip_ = data[1]
-        g_devices[id].mac_ = data[2]
-        g_devices[id].name_ = data[3]
-        g_devices[id].os_ = data[4]
-        g_devices[id].user_ = data[5]
-        g_devices[id].apps_ = data[6]
+        data = j = json.loads(g_devices[id].inbox_)
+        g_devices[id].cid_ = data["cid"]
+        g_devices[id].ipv4_ = data["ipv4"]
+        g_devices[id].mac_ = data["mac"]
+        g_devices[id].device_name_ = data["device_name"]
+        g_devices[id].os_ = data["os"]
+        g_devices[id].cpu_ = data["cpu"]
+        g_devices[id].mem_ = data["mem"]
+        g_devices[id].user_name_ = data["user_name"]
+        g_devices[id].apps_ = data["apps"]
         print("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ip_))
+        
+        
 
     #When start of communication
     if(message == "SYN"):
