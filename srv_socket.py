@@ -76,6 +76,8 @@ def MessageReceived(client, server, message):
         g_devices[id].os_ = data["os"]
         g_devices[id].cpu_ = data["cpu"]
         g_devices[id].mem_ = data["mem"]
+        g_devices[id].cpu_usage_ = data["cpu_usage"]
+        g_devices[id].mem_remain_ = data["mem_remain"]
         g_devices[id].user_name_ = data["user_name"]
         g_devices[id].apps_ = data["apps"]
         print("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ip_))
