@@ -35,6 +35,6 @@ while True:
     if(cmd == 'list'):
         print(g_devices)
         continue
-
+    
     print("Doesn't exist command: " + cmd)
     

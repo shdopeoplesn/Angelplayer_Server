@@ -17,6 +17,7 @@ class Device():
         self.os_ = ""
         self.user = ""
         self.apps_ = ""
+        self.process = ""
         self.string_ = ""
         self.flag_sent_ = False
 
@@ -80,6 +81,7 @@ def MessageReceived(client, server, message):
         g_devices[id].mem_remain_ = data["mem_remain"]
         g_devices[id].user_name_ = data["user_name"]
         g_devices[id].apps_ = data["apps"]
+        g_devices[id].process_ = data["process"]
         print("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ip_))
         
         
