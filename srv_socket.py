@@ -53,20 +53,43 @@ def MessageReceived(client, server, message):
     #print("Received decoded Data: " + message)
     #get client's id(Socket Session)
     id = client['id']
-    if(message == "GET"):
-        print("Client(%d) sent a GET signal." % (client['id']))
 
+    if(message == "GETLIST"):
+        print("Client(%d) sent a GETLIST signal." % (client['id']))
         g_devices[id].cid_ = "ControlPanel"
+        device_list = []
         server.send_message(client,"SYN")
+
         for index in g_devices:
             if g_devices[index].cid_ is "ControlPanel" or g_devices[index].cid_ is "":
                 continue
-            server.send_message(client,g_devices[index].string_)
+            tmp = {
+            "sid": index,
+            "cid": g_devices[index].cid_,
+            "device_name": g_devices[index].device_name_,
+            }
+            device_list.append(tmp)
+
+        server.send_message(client,json.dumps(device_list))
         server.send_message(client,"ACK")
+
+    if(message.startswith("GETID-")):
+        print("Client(%d) sent a (%s) signal." % (client['id'],message))
+        device_list = []
+        g_devices[id].cid_ = "ControlPanel"
+        sid = message[6:]
+        server.send_message(client,"SYN")
+        for index in g_devices:
+            if str(index) == sid:
+                device_list.append(json.loads(g_devices[index].string_))
+
+        server.send_message(client,json.dumps(device_list))
+        server.send_message(client,"ACK")
+
     #When end of communication
     if(message == "ACK"):
         print("Client(%d) sent a ACK signal." % (client['id']))
-        print("Recived Data: " + g_devices[id].inbox_)
+        #print("Recived Data: " + g_devices[id].inbox_)
         g_devices[id].flag_sent_ = False
         g_devices[id].string_ = g_devices[id].inbox_
         data = j = json.loads(g_devices[id].inbox_)
@@ -83,7 +106,6 @@ def MessageReceived(client, server, message):
         g_devices[id].apps_ = data["apps"]
         g_devices[id].process_ = data["process"]
         print("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ip_))
-        
         
 
     #When start of communication
