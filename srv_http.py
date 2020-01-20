@@ -1,7 +1,7 @@
 #Load config variable
 from config import HOST
 from config import HTTP_PORT
-
+from lib_logs import PrintMsg
 import http.server
 import socketserver
 import os
@@ -12,5 +12,5 @@ def HttpServerStart():
 
     Handler = http.server.SimpleHTTPRequestHandler
     httpd = socketserver.TCPServer((HOST, HTTP_PORT), Handler)
-    print("HTTP serving at port: ", HTTP_PORT)
+    PrintMsg("HTTP serving at port: " + str(HTTP_PORT))
     httpd.serve_forever()

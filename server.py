@@ -2,39 +2,39 @@ import threading
 import sys
 import os
 
-print("Welcome to Angelplayer server!")
-
-print("starting socket server...")
 #Load socket server module
 import srv_socket
 from srv_socket import SocketServerStart
-
-print("starting http server...")
 #Load http server module
 import srv_http
 from srv_http import HttpServerStart
 
+from srv_socket import g_devices
+from lib_sqlite import DatabaseInit
+from lib_logs import PrintMsg
+
+PrintMsg("Starting HTTP server...")
 #start http server
 t1 = threading.Thread(target = HttpServerStart)
 t1.start()
-
+PrintMsg("Starting WebSocket server...")
 #start socket server
 t2 = threading.Thread(target = SocketServerStart)
 t2.start()
+#Initialize Database
+DatabaseInit()
 
-
-from srv_socket import g_devices
-
+PrintMsg("Welcome to Angelplayer server!")
 while True:
     cmd = input()
 
     if(cmd == 'exit'):
-        print("Good Bye!")
+        PrintMsg("Good Bye!")
         os._exit(0)
 
     if(cmd == 'list'):
-        print(g_devices)
+        PrintMsg(g_devices)
         continue
     
-    print("Doesn't exist command: " + cmd)
+    PrintMsg("Doesn't exist command: " + cmd)
     

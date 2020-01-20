@@ -3,6 +3,8 @@ from config import HOST
 from config import SOCKET_PORT
 
 from websocket_server import WebsocketServer
+from lib_logs import PrintMsg
+
 import base64
 import json
 import gzip
@@ -33,14 +35,14 @@ def RemoveDeviceById(id):
 
 # Called for every client connecting (after handshake)
 def NewClient(client, server):
-    print("New client connected and was given id %d" % client['id'])
+    PrintMsg("New client connected and was given id %d" % client['id'])
     #store client's data
     g_devices[client['id']] = Device(client['id'])
 
 
 # Called for every client disconnecting
 def ClientLeft(client, server):
-    print("Client(%d) disconnected" % client['id'])
+    PrintMsg("Client(%d) disconnected" % client['id'])
     #remove data of disconnected client
     RemoveDeviceById(client['id'])
 
@@ -63,7 +65,7 @@ def MessageReceived(client, server, message):
                 return 0
 
     if(message == "GETLIST"):
-        #print("Client(%d) sent a GETLIST signal." % (client['id']))
+        #PrintMsg("Client(%d) sent a GETLIST signal." % (client['id']))
         g_devices[id].cid_ = "ControlPanel"
         device_list = []
         server.send_message(client,"SYN")
@@ -83,7 +85,7 @@ def MessageReceived(client, server, message):
 
     if(message.startswith("GETID-")):
         try:
-            #print("Client(%d) sent a (%s) signal." % (client['id'],message))
+            #PrintMsg("Client(%d) sent a (%s) signal." % (client['id'],message))
             device_list = []
             g_devices[id].cid_ = "ControlPanel"
             sid = message[6:]
@@ -95,18 +97,18 @@ def MessageReceived(client, server, message):
             server.send_message(client,json.dumps(device_list))
             server.send_message(client,"ACK")
         except:
-            print("GETID error detected!")
+            PrintMsg("GETID error detected!")
 
     #When end of communication
     if(message == "ACK"):
-        #print("Client(%d) sent a ACK signal." % (client['id']))
-        #print("Recived Data: " + g_devices[id].inbox_)
+        #PrintMsg("Client(%d) sent a ACK signal." % (client['id']))
+        #PrintMsg("Recived Data: " + g_devices[id].inbox_)
         g_devices[id].flag_sent_ = False
         g_devices[id].string_ = gzip.decompress(g_devices[id].inbox_).decode('UTF-8','strict')
         try:
             data = json.loads(g_devices[id].string_)
         except:
-            print("Json parse error detected!")
+            PrintMsg("Json parse error detected!")
             return
         g_devices[id].cid_ = data["cid"]
         g_devices[id].ipv4_ = data["ipv4"]
@@ -120,12 +122,12 @@ def MessageReceived(client, server, message):
         g_devices[id].user_name_ = data["user_name"]
         g_devices[id].apps_ = data["apps"]
         g_devices[id].process_ = data["process"]
-        #print("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ipv4_))
+        #PrintMsg("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ipv4_))
         
 
     #When start of communication
     if(message == "SYN"):
-        #print("Client(%d) sent a SYN signal." % (client['id']))
+        #PrintMsg("Client(%d) sent a SYN signal." % (client['id']))
         g_devices[id].inbox_ = bytearray()
         g_devices[id].flag_sent_ = True
 
