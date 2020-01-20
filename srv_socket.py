@@ -5,13 +5,14 @@ from config import SOCKET_PORT
 from websocket_server import WebsocketServer
 import base64
 import json
+import gzip
 
 class Device():
     def __init__(self, id):
         self.id_ = id
-        self.inbox_ = ""
+        self.inbox_ = bytearray()
         self.cid_ = ""
-        self.ip_ = ""
+        self.ipv4_ = ""
         self.mac_ = ""
         self.name_ = ""
         self.os_ = ""
@@ -45,17 +46,24 @@ def ClientLeft(client, server):
 
 # Called when a client sends a message
 def MessageReceived(client, server, message):
-    #print("Received Raw Data: " + message)
-
-    #decode received message from base64 and turn into UTF-8
-    message = base64.b64decode(message).decode('UTF-8','strict')
-
-    #print("Received decoded Data: " + message)
-    #get client's id(Socket Session)
     id = client['id']
+    #decode received message from base64 and try decompress by gzip
+    try:
+        message = base64.b64decode(message)
+        message = gzip.decompress(message).decode('UTF-8','strict')
+    except:        
+        #if client flags shows it still send data,then put data to inbox.
+        if(g_devices[id].flag_sent_):
+            g_devices[id].inbox_ += message
+            return 0
+        else:
+            try:
+                message = message.decode('UTF-8','strict')
+            except:
+                return 0
 
     if(message == "GETLIST"):
-        print("Client(%d) sent a GETLIST signal." % (client['id']))
+        #print("Client(%d) sent a GETLIST signal." % (client['id']))
         g_devices[id].cid_ = "ControlPanel"
         device_list = []
         server.send_message(client,"SYN")
@@ -74,25 +82,32 @@ def MessageReceived(client, server, message):
         server.send_message(client,"ACK")
 
     if(message.startswith("GETID-")):
-        print("Client(%d) sent a (%s) signal." % (client['id'],message))
-        device_list = []
-        g_devices[id].cid_ = "ControlPanel"
-        sid = message[6:]
-        server.send_message(client,"SYN")
-        for index in g_devices:
-            if str(index) == sid:
-                device_list.append(json.loads(g_devices[index].string_))
+        try:
+            #print("Client(%d) sent a (%s) signal." % (client['id'],message))
+            device_list = []
+            g_devices[id].cid_ = "ControlPanel"
+            sid = message[6:]
+            server.send_message(client,"SYN")
+            for index in g_devices:
+                if str(index) == sid:
+                    device_list.append(json.loads(g_devices[index].string_))
 
-        server.send_message(client,json.dumps(device_list))
-        server.send_message(client,"ACK")
+            server.send_message(client,json.dumps(device_list))
+            server.send_message(client,"ACK")
+        except:
+            print("GETID error detected!")
 
     #When end of communication
     if(message == "ACK"):
-        print("Client(%d) sent a ACK signal." % (client['id']))
+        #print("Client(%d) sent a ACK signal." % (client['id']))
         #print("Recived Data: " + g_devices[id].inbox_)
         g_devices[id].flag_sent_ = False
-        g_devices[id].string_ = g_devices[id].inbox_
-        data = j = json.loads(g_devices[id].inbox_)
+        g_devices[id].string_ = gzip.decompress(g_devices[id].inbox_).decode('UTF-8','strict')
+        try:
+            data = json.loads(g_devices[id].string_)
+        except:
+            print("Json parse error detected!")
+            return
         g_devices[id].cid_ = data["cid"]
         g_devices[id].ipv4_ = data["ipv4"]
         g_devices[id].mac_ = data["mac"]
@@ -105,18 +120,14 @@ def MessageReceived(client, server, message):
         g_devices[id].user_name_ = data["user_name"]
         g_devices[id].apps_ = data["apps"]
         g_devices[id].process_ = data["process"]
-        print("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ip_))
+        #print("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ipv4_))
         
 
     #When start of communication
     if(message == "SYN"):
-        print("Client(%d) sent a SYN signal." % (client['id']))
-        g_devices[id].inbox_ = ""
+        #print("Client(%d) sent a SYN signal." % (client['id']))
+        g_devices[id].inbox_ = bytearray()
         g_devices[id].flag_sent_ = True
-    else:
-        #if client flags shows it still send data,then put data to inbox.
-        if(g_devices[id].flag_sent_):
-            g_devices[id].inbox_ += message
 
 def SocketServerStart():
     server = WebsocketServer(SOCKET_PORT, HOST)
