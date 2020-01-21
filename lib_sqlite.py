@@ -111,7 +111,7 @@ def UpdateClientStatus(data):
             APPS = '{apps}',
             PROCESS = '{process}' WHERE CID = '{cid}'
             ;""")
-            PrintMsg(f"updated {cid}'s data to CURRENT_DEVICES.")
+            #PrintMsg(f"updated {cid}'s data to CURRENT_DEVICES.")
             conn.commit()
         except Exception as e:
             PrintMsg(f"update {cid}'s data to CURRENT_DEVICES faild!")
@@ -135,5 +135,113 @@ def UpdateClientStatus(data):
             conn.close()
             return False
     conn.close()
+
+
+def RemoveClientStatus(cid):
+    '''Remove Client's data from MySQLite Table CURRENT_DEVICES
+    Args:
+        cid: string,client's Custom ID
+    Return:
+        retrun False if error occured
+    '''
+
+    #connect to DB
+    try:
+        conn = sqlite3.connect(DB_PATH)
+    except:
+        PrintMsg("Fail to open database!(RemoveClientStatus)")
+        return False
+    
+    try:
+        c = conn.cursor()
+        c.execute(f"DELETE FROM CURRENT_DEVICES WHERE CID = '{cid}'")
+        conn.commit()
+    except:
+        print("Error: unable to delete data(RemoveClientStatus)")
+        conn.close()
+        return False
+
+
+def GetCurrentDevicesList():
+    '''Get all devices from CURRENT_DEVICES
+
+    Return:
+        json,if error ocurred returns null.
+    '''
+    device_list = []
+
+    #connect to DB
+    try:
+        conn = sqlite3.connect(DB_PATH)
+    except:
+        PrintMsg("Fail to open database!(GetCurrentDevicesList)")
+        return json.dumps(device_list)
+    
+    try:
+        c = conn.cursor()
+        c.execute("SELECT CID,DEVICE_NAME FROM CURRENT_DEVICES")
+        results = c.fetchall()
+        for device in results:
+            tmp = {
+            "cid": device[0],
+            "device_name": device[1],
+            }
+            device_list.append(tmp)
+    except:
+        print("Error: unable to fecth data(GetCurrentDevicesList)")
+        conn.close()
+    return json.dumps(device_list)
+
+def GetDeviceDetailByCustomId(cid):
+    '''Get device detail info from CURRENT_DEVICES by custom id.
+
+    Return:
+        json,if error ocurred returns null.
+    '''
+    device_list = []
+
+    #connect to DB
+    try:
+        conn = sqlite3.connect(DB_PATH)
+    except:
+        PrintMsg("Fail to open database!(GetDeviceDetailByCustomId)")
+        return json.dumps(device_list)
+    
+    try:
+        c = conn.cursor()
+        c.execute(f"""SELECT 
+        IPV4,
+        MAC,
+        DEVICE_NAME,
+        OS,
+        CPU,
+        MEM,
+        CPU_USAGE,
+        MEM_REMAIN,
+        USER_NAME,
+        APPS,
+        PROCESS FROM CURRENT_DEVICES WHERE CID = '{cid}'
+        ;""")
+        results = c.fetchall()
+        for device in results:
+            tmp = {
+            "cid": cid,
+            "ipv4": device[0],
+            "mac": device[1],
+            "device_name": device[2],
+            "os": device[3],
+            "cpu": device[4],
+            "mem": device[5],
+            "cpu_usage": device[6],
+            "mem_remain": device[7],
+            "user_name": device[8],
+            "apps": device[9],
+            "process": device[10],
+            }
+            device_list.append(tmp)
+    except:
+        print("Error: unable to fecth data(GetDeviceDetailByCustomId)")
+        conn.close()
+    return json.dumps(device_list)
 
     

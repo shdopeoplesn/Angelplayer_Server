@@ -9,7 +9,6 @@ from srv_socket import SocketServerStart
 import srv_http
 from srv_http import HttpServerStart
 
-from srv_socket import g_devices
 from lib_sqlite import DatabaseInit
 from lib_logs import PrintMsg
 
@@ -33,7 +32,6 @@ while True:
         os._exit(0)
 
     if(cmd == 'list'):
-        PrintMsg(g_devices)
         continue
     
     PrintMsg("Doesn't exist command: " + cmd)

@@ -1,28 +1,22 @@
-#Load config variable
-from config import HOST
-from config import SOCKET_PORT
-
-from websocket_server import WebsocketServer
-from lib_logs import PrintMsg
-from lib_sqlite import UpdateClientStatus
-
 import base64
 import json
 import gzip
+from websocket_server import WebsocketServer
+#Load config variable
+from config import HOST
+from config import SOCKET_PORT
+#Load libarys
+from lib_logs import PrintMsg
+from lib_sqlite import UpdateClientStatus
+from lib_sqlite import RemoveClientStatus
+from lib_sqlite import GetCurrentDevicesList
+from lib_sqlite import GetDeviceDetailByCustomId
 
 class Device():
     def __init__(self, id):
         self.id_ = id
-        self.inbox_ = bytearray()
         self.cid_ = ""
-        self.ipv4_ = ""
-        self.mac_ = ""
-        self.name_ = ""
-        self.os_ = ""
-        self.user = ""
-        self.apps_ = ""
-        self.process = ""
-        self.string_ = ""
+        self.inbox_ = bytearray()
         self.flag_sent_ = False
 
 global g_devices
@@ -30,6 +24,7 @@ g_devices = {}
 
 #Remove Device data from global list g_devices
 def RemoveDeviceById(id):
+    RemoveClientStatus(g_devices[id].cid_)
     del g_devices[id]
 
 # Called for every client connecting (after handshake)
@@ -66,34 +61,17 @@ def MessageReceived(client, server, message):
     if(message == "GETLIST"):
         #PrintMsg("Client(%d) sent a GETLIST signal." % (client['id']))
         g_devices[id].cid_ = "ControlPanel"
-        device_list = []
         server.send_message(client,"SYN")
-
-        for index in g_devices:
-            if g_devices[index].cid_ is "ControlPanel" or g_devices[index].cid_ is "":
-                continue
-            tmp = {
-            "sid": index,
-            "cid": g_devices[index].cid_,
-            "device_name": g_devices[index].device_name_,
-            }
-            device_list.append(tmp)
-
-        server.send_message(client,json.dumps(device_list))
+        server.send_message(client,GetCurrentDevicesList())
         server.send_message(client,"ACK")
 
     if(message.startswith("GETID-")):
         try:
             #PrintMsg("Client(%d) sent a (%s) signal." % (client['id'],message))
-            device_list = []
             g_devices[id].cid_ = "ControlPanel"
-            sid = message[6:]
+            cid = message[6:]
             server.send_message(client,"SYN")
-            for index in g_devices:
-                if str(index) == sid:
-                    device_list.append(json.loads(g_devices[index].string_))
-
-            server.send_message(client,json.dumps(device_list))
+            server.send_message(client,GetDeviceDetailByCustomId(cid))
             server.send_message(client,"ACK")
         except:
             PrintMsg("GETID error detected!")
@@ -103,28 +81,13 @@ def MessageReceived(client, server, message):
         #PrintMsg("Client(%d) sent a ACK signal." % (client['id']))
         #PrintMsg("Recived Data: " + g_devices[id].inbox_)
         g_devices[id].flag_sent_ = False
-        g_devices[id].string_ = gzip.decompress(g_devices[id].inbox_).decode('UTF-8','strict')
         try:
-            data = json.loads(g_devices[id].string_)
+            data = json.loads(gzip.decompress(g_devices[id].inbox_).decode('UTF-8','strict'))
+            UpdateClientStatus(data)
+            g_devices[id].cid_ = data['cid']
         except:
             PrintMsg("Json parse error detected!")
             return
-        g_devices[id].cid_ = data["cid"]
-        g_devices[id].ipv4_ = data["ipv4"]
-        g_devices[id].mac_ = data["mac"]
-        g_devices[id].device_name_ = data["device_name"]
-        g_devices[id].os_ = data["os"]
-        g_devices[id].cpu_ = data["cpu"]
-        g_devices[id].mem_ = data["mem"]
-        g_devices[id].cpu_usage_ = data["cpu_usage"]
-        g_devices[id].mem_remain_ = data["mem_remain"]
-        g_devices[id].user_name_ = data["user_name"]
-        g_devices[id].apps_ = data["apps"]
-        g_devices[id].process_ = data["process"]
-        UpdateClientStatus(data)
-        PrintMsg("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ipv4_))
-        
-
     #When start of communication
     if(message == "SYN"):
         #PrintMsg("Client(%d) sent a SYN signal." % (client['id']))
