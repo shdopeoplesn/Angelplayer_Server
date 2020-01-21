@@ -5,6 +5,13 @@ import time
 import logging
 
 def PrintMsg(msg):
+    '''Print message to console with Datetime,
+    and write to log file.
+    
+    Args:
+        msg: string
+    '''
+    
     now = datetime.now() # current date and time
     #write to log file
     date = now.strftime("%m-%d-%Y")

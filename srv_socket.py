@@ -4,6 +4,7 @@ from config import SOCKET_PORT
 
 from websocket_server import WebsocketServer
 from lib_logs import PrintMsg
+from lib_sqlite import UpdateClientStatus
 
 import base64
 import json
@@ -23,8 +24,6 @@ class Device():
         self.process = ""
         self.string_ = ""
         self.flag_sent_ = False
-
-
 
 global g_devices
 g_devices = {}
@@ -122,7 +121,8 @@ def MessageReceived(client, server, message):
         g_devices[id].user_name_ = data["user_name"]
         g_devices[id].apps_ = data["apps"]
         g_devices[id].process_ = data["process"]
-        #PrintMsg("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ipv4_))
+        UpdateClientStatus(data)
+        PrintMsg("Received Data from %s (%s)" % (g_devices[id].cid_,g_devices[id].ipv4_))
         
 
     #When start of communication

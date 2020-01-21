@@ -7,6 +7,10 @@ import socketserver
 import os
 
 def HttpServerStart():
+    '''Start HTTP server,
+    web root path is located build/.
+    '''
+    
     web_dir = os.path.join(os.path.dirname(__file__), 'build')
     os.chdir(web_dir)
 
