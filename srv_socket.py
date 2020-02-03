@@ -43,12 +43,13 @@ def ClientLeft(client, server):
 # Called when a client sends a message
 def MessageReceived(client, server, message):
     id = client['id']
-    #decode received message from base64 and try decompress by gzip
+    message_base64 = message
     try:
         message = base64.b64decode(message)
         message = message.decode('UTF-8','strict')
     except:
         return
+   
     
     if(message == "GETLIST"):
         #PrintMsg("Client(%d) sent a GETLIST signal." % (client['id']))
@@ -74,7 +75,7 @@ def MessageReceived(client, server, message):
         #PrintMsg("Recived Data: " + str(g_devices[id].inbox_))
         g_devices[id].flag_sent_ = False
         try:
-            data = json.loads(g_devices[id].inbox_)
+            data = json.loads(base64.b64decode(g_devices[id].inbox_).decode('UTF-8','strict'))
             UpdateClientStatus(data)
             g_devices[id].cid_ = data['cid']
         except:
@@ -83,7 +84,7 @@ def MessageReceived(client, server, message):
     
     #if client flags shows it still send data,then put data to inbox.
     if(g_devices[id].flag_sent_):
-        g_devices[id].inbox_ += message
+        g_devices[id].inbox_ += message_base64
 
     #When start of communication
     if(message == "SYN"):
