@@ -1,6 +1,6 @@
 import base64
 import json
-import gzip
+
 from websocket_server import WebsocketServer
 #Load config variable
 from config import HOST
@@ -16,7 +16,7 @@ class Device():
     def __init__(self, id):
         self.id_ = id
         self.cid_ = ""
-        self.inbox_ = bytearray()
+        self.inbox_ = ""
         self.flag_sent_ = False
 
 global g_devices
@@ -46,18 +46,10 @@ def MessageReceived(client, server, message):
     #decode received message from base64 and try decompress by gzip
     try:
         message = base64.b64decode(message)
-        message = gzip.decompress(message).decode('UTF-8','strict')
-    except:        
-        #if client flags shows it still send data,then put data to inbox.
-        if(g_devices[id].flag_sent_):
-            g_devices[id].inbox_ += message
-            return 0
-        else:
-            try:
-                message = message.decode('UTF-8','strict')
-            except:
-                return 0
-
+        message = message.decode('UTF-8','strict')
+    except:
+        return
+    
     if(message == "GETLIST"):
         #PrintMsg("Client(%d) sent a GETLIST signal." % (client['id']))
         g_devices[id].cid_ = "ControlPanel"
@@ -79,21 +71,25 @@ def MessageReceived(client, server, message):
     #When end of communication
     if(message == "ACK"):
         #PrintMsg("Client(%d) sent a ACK signal." % (client['id']))
-        #PrintMsg("Recived Data: " + g_devices[id].inbox_)
+        #PrintMsg("Recived Data: " + str(g_devices[id].inbox_))
         g_devices[id].flag_sent_ = False
         try:
-            data = json.loads(gzip.decompress(g_devices[id].inbox_).decode('UTF-8','strict'))
+            data = json.loads(g_devices[id].inbox_)
             UpdateClientStatus(data)
             g_devices[id].cid_ = data['cid']
         except:
             PrintMsg("Json parse error detected!")
             return
+    
+    #if client flags shows it still send data,then put data to inbox.
+    if(g_devices[id].flag_sent_):
+        g_devices[id].inbox_ += message
+
     #When start of communication
     if(message == "SYN"):
         #PrintMsg("Client(%d) sent a SYN signal." % (client['id']))
-        g_devices[id].inbox_ = bytearray()
+        g_devices[id].inbox_ = ""
         g_devices[id].flag_sent_ = True
-
 def SocketServerStart():
     server = WebsocketServer(SOCKET_PORT, HOST)
     server.set_fn_new_client(NewClient)
