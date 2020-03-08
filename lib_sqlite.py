@@ -44,7 +44,8 @@ def DatabaseInit():
                 USER_NAME   VARCHAR(50)               NULL,
                 APPS        JSON                      NULL,
                 PROCESS     JSON                      NULL,
-                DISKS       JSON                      NULL
+                DISKS       JSON                      NULL,
+                DISKS_USAGE DOUBLE                    NULL
                 );''')
         PrintMsg("Table CURRENT_DEVICES created successfully!")
         conn.commit()
@@ -61,7 +62,6 @@ def UpdateClientStatus(data):
     Return:
         retrun False if error occured
     '''
-
     cid = data["cid"]
     ipv4 = data["ipv4"]
     mac = data["mac"]
@@ -75,6 +75,7 @@ def UpdateClientStatus(data):
     apps = json.dumps(data["apps"])
     process = json.dumps(data["process"])
     disks = json.dumps(data["disks"])
+    disks_usage = data["disks_usage"]
 
     stored = False
 
@@ -112,7 +113,8 @@ def UpdateClientStatus(data):
             USER_NAME = '{user_name}',
             APPS = '{apps}',
             PROCESS = '{process}',
-            DISKS = '{disks}' WHERE CID = '{cid}'
+            DISKS = '{disks}',
+            DISKS_USAGE = '{disks_usage}' WHERE CID = '{cid}'
             ;""")
             #PrintMsg(f"updated {cid}'s data to CURRENT_DEVICES.")
             conn.commit()
@@ -127,8 +129,8 @@ def UpdateClientStatus(data):
         try:
             c = conn.cursor()
             c.execute(f"""INSERT INTO CURRENT_DEVICES
-            (CID,IPV4,MAC,DEVICE_NAME,OS,CPU,MEM,CPU_USAGE,MEM_REMAIN,USER_NAME,APPS,PROCESS,DISKS) VALUES 
-            ('{cid}','{ipv4}','{mac}','{device_name}','{os}','{cpu}',{mem},{cpu_usage},{mem_remain},'{user_name}','{apps}','{process}','{disks}');
+            (CID,IPV4,MAC,DEVICE_NAME,OS,CPU,MEM,CPU_USAGE,MEM_REMAIN,USER_NAME,APPS,PROCESS,DISKS,DISKS_USAGE) VALUES 
+            ('{cid}','{ipv4}','{mac}','{device_name}','{os}','{cpu}',{mem},{cpu_usage},{mem_remain},'{user_name}','{apps}','{process}','{disks}','{disks_usage}');
             """)
             PrintMsg(f"Insert {cid}'s data to CURRENT_DEVICES successfully!")
             conn.commit()
@@ -224,7 +226,8 @@ def GetDeviceDetailByCustomId(cid):
         USER_NAME,
         APPS,
         PROCESS,
-        DISKS FROM CURRENT_DEVICES WHERE CID = '{cid}'
+        DISKS,
+        DISKS_USAGE FROM CURRENT_DEVICES WHERE CID = '{cid}'
         ;""")
         results = c.fetchall()
         for device in results:
@@ -242,6 +245,7 @@ def GetDeviceDetailByCustomId(cid):
             "apps": device[9],
             "process": device[10],
             "disks": device[11],
+            "disks_usage": device[12]
             }
             device_list.append(tmp)
     except:

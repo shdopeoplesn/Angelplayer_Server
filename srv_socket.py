@@ -90,7 +90,7 @@ def MessageReceived(client, server, message):
             UpdateClientStatus(data)
             g_devices[id].cid_ = data['cid']
         except:
-            #PrintMsg("Json parse error while receive ACK signal from client: " + str(id) + "!")
+            PrintMsg("Json parse error while receive ACK signal from client: " + str(id) + "!")
             #print(base64.b64decode(g_devices[id].inbox_).decode('UTF-8','strict'))
             return
     
